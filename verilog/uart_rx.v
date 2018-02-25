@@ -1,0 +1,130 @@
+module UartRx #(
+  parameter CLOCK_DIVIDER_WIDTH = 16
+) (
+  input reset_i,
+  input clock_i,
+  input clear_ready_i,
+  input parity_bit_i,
+  input parity_even_i,
+  input serial_i,
+  input [CLOCK_DIVIDER_WIDTH - 1:0] clock_divider_i,
+  output reg [7:0] data_o = 8'h00,
+  output reg ready_o = 1'b0
+);
+
+localparam STATE_IDLE = 0;
+localparam STATE_RECEIVE_PACKET = 1;
+localparam STATE_VALIDATE_PACKET = 2;
+
+localparam PARITY_BIT_NUM = 4'd9;
+
+reg [1:0] state = STATE_IDLE;
+reg [CLOCK_DIVIDER_WIDTH - 1:0] bit_timer = 0;
+reg [5:0] select_packet_bit = 0;
+reg parity_bit = 1'b0;
+reg parity_even = 1'b0;
+reg clear_ready_has_triggered = 1'b0;
+reg [11:0] packet = 12'h000;
+
+wire [CLOCK_DIVIDER_WIDTH - 1:0] bit_timer_start_value = clock_divider_i - 1'd1;
+wire [CLOCK_DIVIDER_WIDTH - 1:0] sample_position = clock_divider_i / 2'd2;
+wire [3:0] total_bits_to_receive = 4'd10 + parity_bit;
+
+wire start_bit_valid = packet[0] == 1'b0;
+
+wire [3:0] stop_bit_offset = parity_bit ? PARITY_BIT_NUM + 1'd1 : PARITY_BIT_NUM;
+wire stop_bit_valid = packet[stop_bit_offset] == 1'b1;
+
+wire even_parity_value =
+  1'h01 & (
+    packet[8] +
+    packet[7] +
+    packet[6] +
+    packet[5] +
+    packet[4] +
+    packet[3] +
+    packet[2] +
+    packet[1]
+  );
+
+wire even_parity_valid = packet[PARITY_BIT_NUM] == even_parity_value;
+wire odd_parity_valid = packet[PARITY_BIT_NUM] == ~even_parity_value;
+
+wire parity_valid = parity_bit
+  ? (parity_even ? even_parity_valid : odd_parity_valid)
+  : 1'b1;
+
+wire packet_valid =
+  start_bit_valid &&
+  parity_valid &&
+  stop_bit_valid;
+
+always @ (posedge reset_i, posedge clock_i) begin
+  if (reset_i) begin
+    state <= STATE_IDLE;
+    data_o <= 8'h00;
+    ready_o <= 1'b0;
+    bit_timer <= 0;
+    select_packet_bit <= 0;
+    packet <= 12'h000;
+    parity_bit <= 1'b0;
+    parity_even <= 1'b0;
+    clear_ready_has_triggered <= 1'b0;
+  end
+  else begin
+    if (!clear_ready_i)
+      clear_ready_has_triggered <= 1'b0;
+
+    if (clear_ready_i && !clear_ready_has_triggered) begin
+      ready_o <= 1'b0;
+      clear_ready_has_triggered <= 1'b1;
+    end
+
+    case (state)
+      STATE_IDLE:
+        begin
+          bit_timer <= bit_timer_start_value;
+          select_packet_bit <= 0;
+
+          if (!serial_i && clock_divider_i >= 2'd2) begin
+            packet <= 12'h000;
+            parity_bit <= parity_bit_i;
+            parity_even <= parity_even_i;
+
+            state <= STATE_RECEIVE_PACKET;
+          end
+        end
+
+      STATE_RECEIVE_PACKET:
+        begin
+          if (bit_timer == sample_position) begin
+            packet[select_packet_bit] <= serial_i;
+            select_packet_bit <= select_packet_bit + 1'd1;
+
+            if (select_packet_bit >= total_bits_to_receive - 1'd1)
+              state <= STATE_VALIDATE_PACKET;
+          end
+
+          if (bit_timer != 0)
+            bit_timer <= bit_timer - 1'd1;
+          else
+            bit_timer <= bit_timer_start_value;
+        end
+
+      STATE_VALIDATE_PACKET:
+        begin
+          if (packet_valid && !ready_o) begin
+            data_o <= packet[8:1];
+            ready_o <= 1'b1;
+          end
+
+          state <= STATE_IDLE;
+        end
+
+      default:
+        state <= STATE_IDLE;
+    endcase
+  end
+end
+
+endmodule
