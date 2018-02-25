@@ -15,8 +15,7 @@ wire busy_o;
 
 reg expected_parity = 1'b0;
 
-UartTx uart_tx
-(
+UartTx uart_tx (
   .reset_i(reset_i),
   .clock_i(clock_i),
   .write_i(write_i),

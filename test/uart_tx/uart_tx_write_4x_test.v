@@ -41,9 +41,8 @@ initial begin
   #1 reset_i = 1'b0;
   @ (negedge busy_o); // Wait for reset.
 
-  #1
-  #1 send_byte(8'h55);
-  #1 send_byte(8'hAA);
+  #2 send_byte(8'h55);
+  #2 send_byte(8'hAA);
 end
 
 task send_byte;

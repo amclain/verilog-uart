@@ -11,8 +11,7 @@ reg [7:0] data_i = 8'h00;
 wire serial_o;
 wire busy_o;
 
-UartTx uart_tx
-(
+UartTx uart_tx (
   .reset_i(reset_i),
   .clock_i(clock_i),
   .write_i(write_i),
