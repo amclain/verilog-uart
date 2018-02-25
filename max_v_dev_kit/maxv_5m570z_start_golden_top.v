@@ -1,3 +1,5 @@
+// A loopback UART transceiver.
+
 module maxv_5m570z_start_golden_top(
   input CLK_SE_AR,
 
@@ -5,10 +7,10 @@ module maxv_5m570z_start_golden_top(
   input USER_PB0, USER_PB1,
   input CAP_PB_1,
   output USER_LED0,
-  output reg USER_LED1,
+  output USER_LED1,
 
   // Connector A 
-  output [36:1] AGPIO,
+  inout [36:1] AGPIO,
 
   // Connector B
   input [36:7] BGPIO,
@@ -34,68 +36,58 @@ module maxv_5m570z_start_golden_top(
   input SPI_MOSI, SPI_SCK, SPI_CSN, SPI_MISO
 );
 
-assign AGPIO[36:3] = 1'b0;
-assign AGPIO[2] = write_i; // DEBUG ///////////////////////////////////////
-assign AGPIO[1] = serial_o;
-assign USER_LED0 = ~busy_o;
+reg [6:0] clock_divider_i = 7'd87;
+reg two_stop_bits_i = 1'b0;
+reg parity_bit_i = 1'b0;
+reg parity_even_i = 1'b0;
 
-reg write_i = 1'b0;
-reg [7:0] data_i = 8'h00;
-
-wire busy_o;
+wire [7:0] data;
+wire serial_i;
 wire serial_o;
+wire reset_i;
+wire write_i;
+wire busy_o;
+wire ready_o;
+wire clear_ready_i;
 
 UartTx #(
   .CLOCK_DIVIDER_WIDTH(7)
 )
 uart_tx (
-  .reset_i(~USER_PB0),
+  .reset_i(reset_i),
   .clock_i(CLK_SE_AR),
   .write_i(write_i),
-  .two_stop_bits_i(1'b0),
-  .parity_bit_i(1'b0),
-  .parity_even_i(1'b0),
-  .clock_divider_i(7'd87),
-  .data_i(data_i),
+  .two_stop_bits_i(two_stop_bits_i),
+  .parity_bit_i(parity_bit_i),
+  .parity_even_i(parity_even_i),
+  .clock_divider_i(clock_divider_i),
+  .data_i(data),
   .serial_o(serial_o),
   .busy_o(busy_o)
 );
 
-localparam STATE_WAIT = 0;
-localparam STATE_WRITE = 1;
-localparam STATE_END_WRITE = 2;
+UartRx #(
+  .CLOCK_DIVIDER_WIDTH(7)
+)
+uart_rx (
+  .reset_i(~USER_PB0),
+  .clock_i(CLK_SE_AR),
+  .clear_ready_i(clear_ready_i),
+  .parity_bit_i(parity_bit_i),
+  .parity_even_i(parity_even_i),
+  .serial_i(serial_i),
+  .clock_divider_i(clock_divider_i),
+  .data_o(data),
+  .ready_o(ready_o)
+);
 
-reg [23:0] one_second_counter = 24'd0;
-reg [1:0] tx_state = 2'd0;
+assign serial_i = AGPIO[2];
+assign AGPIO[1] = serial_o;
+assign USER_LED0 = ~busy_o;
+assign USER_LED1 = ~ready_o;
+assign reset_i = ~USER_PB0;
 
-always @ (posedge CLK_SE_AR) begin
-  case (tx_state)
-    STATE_WAIT:
-      if (one_second_counter < 10000000) begin
-        one_second_counter <= one_second_counter + 1'd1;
-      end
-      else begin
-        USER_LED1 <= ~USER_LED1; // Heartbeat LED
-        one_second_counter <= 0;
-        tx_state <= STATE_WRITE;
-      end
-
-    STATE_WRITE:
-      begin
-        data_i <= 8'h55;
-        write_i <= 1'b1;
-        tx_state <= STATE_END_WRITE;
-      end
-
-    STATE_END_WRITE:
-      begin
-        write_i <= 1'b0;
-        tx_state <= STATE_WAIT;
-      end
-
-    default:
-      tx_state <= STATE_WAIT;
-  endcase
-end
+assign write_i = ready_o & !busy_o;
+assign clear_ready_i = busy_o;
 
 endmodule
