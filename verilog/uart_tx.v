@@ -66,6 +66,9 @@ always @ (posedge reset_i, posedge clock_i) begin
     write_has_triggered <= 1'b0;
   end
   else begin
+    if (!write_i)
+      write_has_triggered <= 1'b0;
+
     case (state)
       // This state delays operation for the length of 1 packet so that if the
       // module was reset in the middle of transmission the receiving side
@@ -88,9 +91,6 @@ always @ (posedge reset_i, posedge clock_i) begin
           serial_o <= 1'b1;
           bit_timer <= bit_timer_start_value;
           select_packet_bit <= 0;
-
-          if (!write_i)
-            write_has_triggered <= 1'b0;
 
           if (write_i && !write_has_triggered) begin
             data <= data_i;
