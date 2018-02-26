@@ -40,14 +40,17 @@ reg [6:0] clock_divider_i = 7'd87;
 reg two_stop_bits_i = 1'b0;
 reg parity_bit_i = 1'b0;
 reg parity_even_i = 1'b0;
+// reg write_i = 1'b0;
+// reg clear_ready_i = 1'b0;
 
+wire clock_i;
 wire [7:0] data;
 wire serial_i;
 wire serial_o;
 wire reset_i;
-wire write_i;
 wire busy_o;
 wire ready_o;
+wire write_i;
 wire clear_ready_i;
 
 UartTx #(
@@ -55,7 +58,7 @@ UartTx #(
 )
 uart_tx (
   .reset_i(reset_i),
-  .clock_i(CLK_SE_AR),
+  .clock_i(clock_i),
   .write_i(write_i),
   .two_stop_bits_i(two_stop_bits_i),
   .parity_bit_i(parity_bit_i),
@@ -70,8 +73,8 @@ UartRx #(
   .CLOCK_DIVIDER_WIDTH(7)
 )
 uart_rx (
-  .reset_i(~USER_PB0),
-  .clock_i(CLK_SE_AR),
+  .reset_i(reset_i),
+  .clock_i(clock_i),
   .clear_ready_i(clear_ready_i),
   .parity_bit_i(parity_bit_i),
   .parity_even_i(parity_even_i),
@@ -81,6 +84,7 @@ uart_rx (
   .ready_o(ready_o)
 );
 
+assign clock_i = CLK_SE_AR;
 assign serial_i = AGPIO[2];
 assign AGPIO[1] = serial_o;
 assign USER_LED0 = ~busy_o;
@@ -89,5 +93,30 @@ assign reset_i = ~USER_PB0;
 
 assign write_i = ready_o & !busy_o;
 assign clear_ready_i = busy_o;
+
+// reg write_has_triggered = 1'b0;
+// reg busy_has_triggered = 1'b0;
+
+// always @ (posedge clock_i) begin
+//   // Track write ---------------------------------------------------------------
+//   if (ready_o && !busy_o && !write_has_triggered) begin
+//     write_i <= 1'b1;
+//     write_has_triggered <= 1'b1;
+//     clear_ready_i <= 1'b1;
+//   end
+
+//   if (busy_o && write_has_triggered)
+//     busy_has_triggered <= 1'b1;
+
+//   if (!busy_o && busy_has_triggered && write_has_triggered)
+//     write_has_triggered <= 1'b0;
+
+//   if (!busy_o && !write_has_triggered)
+//     busy_has_triggered <= 1'b0;
+
+//   // Track read ----------------------------------------------------------------
+//   if (!ready_o)
+//     clear_ready_i <= 1'b0;
+// end
 
 endmodule
