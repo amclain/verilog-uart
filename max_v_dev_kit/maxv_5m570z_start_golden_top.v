@@ -40,8 +40,8 @@ reg [6:0] clock_divider_i = 7'd87;
 reg two_stop_bits_i = 1'b0;
 reg parity_bit_i = 1'b0;
 reg parity_even_i = 1'b0;
-// reg write_i = 1'b0;
-// reg clear_ready_i = 1'b0;
+reg serial_i_buffer_1 = 1'b0;
+reg serial_i_buffer_2 = 1'b0;
 
 wire clock_i;
 wire [7:0] data;
@@ -78,7 +78,7 @@ uart_rx (
   .clear_ready_i(clear_ready_i),
   .parity_bit_i(parity_bit_i),
   .parity_even_i(parity_even_i),
-  .serial_i(serial_i),
+  .serial_i(serial_i_buffer_2),
   .clock_divider_i(clock_divider_i),
   .data_o(data),
   .ready_o(ready_o)
@@ -94,29 +94,9 @@ assign reset_i = ~USER_PB0;
 assign write_i = ready_o & !busy_o;
 assign clear_ready_i = busy_o;
 
-// reg write_has_triggered = 1'b0;
-// reg busy_has_triggered = 1'b0;
-
-// always @ (posedge clock_i) begin
-//   // Track write ---------------------------------------------------------------
-//   if (ready_o && !busy_o && !write_has_triggered) begin
-//     write_i <= 1'b1;
-//     write_has_triggered <= 1'b1;
-//     clear_ready_i <= 1'b1;
-//   end
-
-//   if (busy_o && write_has_triggered)
-//     busy_has_triggered <= 1'b1;
-
-//   if (!busy_o && busy_has_triggered && write_has_triggered)
-//     write_has_triggered <= 1'b0;
-
-//   if (!busy_o && !write_has_triggered)
-//     busy_has_triggered <= 1'b0;
-
-//   // Track read ----------------------------------------------------------------
-//   if (!ready_o)
-//     clear_ready_i <= 1'b0;
-// end
+always @ (posedge clock_i) begin
+  serial_i_buffer_1 <= serial_i;
+  serial_i_buffer_2 <= serial_i_buffer_1;
+end
 
 endmodule
