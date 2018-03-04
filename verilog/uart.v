@@ -3,7 +3,7 @@ module Uart (
   input clock_i,
   input serial_i,
   input write_i,
-  input clear_ready_i,
+  input ack_i,
   input two_stop_bits_i,
   input parity_bit_i,
   input parity_even_i,
@@ -32,7 +32,7 @@ UartTx uart_tx (
 UartRx uart_rx (
   .reset_i(reset_i),
   .clock_i(clock_i),
-  .clear_ready_i(clear_ready_i),
+  .ack_i(ack_i),
   .parity_bit_i(parity_bit_i),
   .parity_even_i(parity_even_i),
   .serial_i(serial_i),

@@ -1,11 +1,10 @@
-// Test that the eady_o flag is only cleared once for each pulse
-// of clear_ready_i.
+// Test that the eady_o flag is only cleared once for each pulse of ack_i.
 
-module UartRxClearReadyOneshotTest ();
+module UartRxAckOneshotTest ();
 
 reg reset_i = 1'b0;
 reg clock_i = 1'b0;
-reg clear_ready_i = 1'b0;
+reg ack_i = 1'b0;
 reg parity_bit_i = 1'b0;
 reg parity_even_i = 1'b0;
 reg serial_i = 1'b1;
@@ -16,7 +15,7 @@ wire ready_o;
 UartRx uart_rx (
   .reset_i(reset_i),
   .clock_i(clock_i),
-  .clear_ready_i(clear_ready_i),
+  .ack_i(ack_i),
   .parity_bit_i(parity_bit_i),
   .parity_even_i(parity_even_i),
   .serial_i(serial_i),
@@ -31,20 +30,20 @@ initial begin
   #1 send_packet(8'h55);
   #6 assert_data_received(8'h55);
 
-  #2 clear_ready_i = 1'b1;
+  #2 ack_i = 1'b1;
   #2 if (ready_o)
-    $display("FAILED - ready_o should be low after clear_ready_i goes high");
+    $display("FAILED - ready_o should be low after ack_i goes high");
 
   #2 send_packet(8'hAA);
   #6 assert_data_received(8'hAA);
   
-  // This packet should be dropped because clear_ready_i wasn't reset.
+  // This packet should be dropped because ack_i wasn't reset.
   #2 send_packet(8'hCC);
   #6 assert_data_received(8'hAA);
 
-  #2 clear_ready_i = 1'b0;
+  #2 ack_i = 1'b0;
   #2 if (!ready_o)
-    $display("FAILED - ready_o should remain high when clear_ready_i goes low and another packet is available");
+    $display("FAILED - ready_o should remain high when ack_i goes low and another packet is available");
 
   #4 clear_ready_flag();
 end
@@ -80,15 +79,15 @@ endtask
 
 task clear_ready_flag;
   begin
-    clear_ready_i = 1'b1;
+    ack_i = 1'b1;
 
     if (!ready_o)
       $display("FAILED - ready_o should stay high after receiving packet");
 
-    #2 clear_ready_i = 1'b0;
+    #2 ack_i = 1'b0;
 
     if (ready_o)
-      $display("FAILED - ready_o should be low after clear_ready_i goes high");
+      $display("FAILED - ready_o should be low after ack_i goes high");
   end
 endtask
 

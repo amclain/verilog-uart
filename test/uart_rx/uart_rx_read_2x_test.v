@@ -4,7 +4,7 @@ module UartRxRead2xTest ();
 
 reg reset_i = 1'b0;
 reg clock_i = 1'b0;
-reg clear_ready_i = 1'b0;
+reg ack_i = 1'b0;
 reg parity_bit_i = 1'b0;
 reg parity_even_i = 1'b0;
 reg serial_i = 1'b1;
@@ -15,7 +15,7 @@ wire ready_o;
 UartRx uart_rx (
   .reset_i(reset_i),
   .clock_i(clock_i),
-  .clear_ready_i(clear_ready_i),
+  .ack_i(ack_i),
   .parity_bit_i(parity_bit_i),
   .parity_even_i(parity_even_i),
   .serial_i(serial_i),
@@ -67,15 +67,15 @@ endtask
 
 task clear_ready_flag;
   begin
-    clear_ready_i = 1'b1;
+    ack_i = 1'b1;
 
     if (!ready_o)
       $display("FAILED - ready_o should stay high after receiving packet");
 
-    #2 clear_ready_i = 1'b0;
+    #2 ack_i = 1'b0;
 
     if (ready_o)
-      $display("FAILED - ready_o should be low after clear_ready_i goes high");
+      $display("FAILED - ready_o should be low after ack_i goes high");
   end
 endtask
 

@@ -3,7 +3,7 @@ module UartRx #(
 ) (
   input reset_i,
   input clock_i,
-  input clear_ready_i,
+  input ack_i,
   input parity_bit_i,
   input parity_even_i,
   input serial_i,
@@ -24,7 +24,7 @@ reg [CLOCK_DIVIDER_WIDTH - 1:0] bit_timer = 0;
 reg [5:0] select_packet_bit = 0;
 reg parity_bit = 1'b0;
 reg parity_even = 1'b0;
-reg clear_ready_has_triggered = 1'b0;
+reg ack_has_triggered = 1'b0;
 reg [11:0] packet = 12'h000;
 
 wire [CLOCK_DIVIDER_WIDTH - 1:0] bit_timer_start_value = clock_divider_i - 1'd1;
@@ -70,15 +70,15 @@ always @ (posedge reset_i, posedge clock_i) begin
     packet <= 12'h000;
     parity_bit <= 1'b0;
     parity_even <= 1'b0;
-    clear_ready_has_triggered <= 1'b0;
+    ack_has_triggered <= 1'b0;
   end
   else begin
-    if (!clear_ready_i)
-      clear_ready_has_triggered <= 1'b0;
+    if (!ack_i)
+      ack_has_triggered <= 1'b0;
 
-    if (clear_ready_i && !clear_ready_has_triggered) begin
+    if (ack_i && !ack_has_triggered) begin
       ready_o <= 1'b0;
-      clear_ready_has_triggered <= 1'b1;
+      ack_has_triggered <= 1'b1;
     end
 
     case (state)

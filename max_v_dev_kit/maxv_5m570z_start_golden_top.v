@@ -51,7 +51,7 @@ wire reset_i;
 wire busy_o;
 wire ready_o;
 wire write_i;
-wire clear_ready_i;
+wire ack_i;
 
 UartTx #(
   .CLOCK_DIVIDER_WIDTH(7)
@@ -75,7 +75,7 @@ UartRx #(
 uart_rx (
   .reset_i(reset_i),
   .clock_i(clock_i),
-  .clear_ready_i(clear_ready_i),
+  .ack_i(ack_i),
   .parity_bit_i(parity_bit_i),
   .parity_even_i(parity_even_i),
   .serial_i(serial_i_buffer_2),
@@ -92,7 +92,7 @@ assign USER_LED1 = ~ready_o;
 assign reset_i = ~USER_PB0;
 
 assign write_i = ready_o & !busy_o;
-assign clear_ready_i = busy_o;
+assign ack_i = busy_o;
 
 always @ (posedge clock_i) begin
   serial_i_buffer_1 <= serial_i;
