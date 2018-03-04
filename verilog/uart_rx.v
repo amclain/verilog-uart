@@ -16,6 +16,7 @@ localparam STATE_IDLE = 0;
 localparam STATE_RECEIVE_PACKET = 1;
 localparam STATE_VALIDATE_PACKET = 2;
 
+localparam START_BIT_NUM = 6'd0;
 localparam PARITY_BIT_NUM = 4'd9;
 
 reg [1:0] state = STATE_IDLE;
@@ -101,7 +102,10 @@ always @ (posedge reset_i, posedge clock_i) begin
             packet[select_packet_bit] <= serial_i;
             select_packet_bit <= select_packet_bit + 1'd1;
 
-            if (select_packet_bit >= total_bits_to_receive - 1'd1)
+            if (select_packet_bit == START_BIT_NUM && serial_i == 1'b1)
+              // Start bit not valid. May have triggered due to noise.
+              state <= STATE_IDLE;
+            else if (select_packet_bit >= total_bits_to_receive - 1'd1)
               state <= STATE_VALIDATE_PACKET;
           end
 
