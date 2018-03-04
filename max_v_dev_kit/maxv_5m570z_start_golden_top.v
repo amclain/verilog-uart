@@ -1,4 +1,4 @@
-// A loopback UART transceiver.
+// Development kit top file.
 
 module maxv_5m570z_start_golden_top(
   input CLK_SE_AR,
@@ -36,56 +36,40 @@ module maxv_5m570z_start_golden_top(
   input SPI_MOSI, SPI_SCK, SPI_CSN, SPI_MISO
 );
 
-reg [6:0] clock_divider_i = 7'd87;
-reg two_stop_bits_i = 1'b0;
-reg parity_bit_i = 1'b0;
-reg parity_even_i = 1'b0;
 reg [1:0] serial_i_buffer = 2'b00;
 reg [1:0] reset_i_buffer = 2'b00;
 
 wire clock_i;
-wire [7:0] data;
-wire serial_i;
 wire serial_i_external;
-wire serial_o;
+wire serial_i;
 wire reset_i;
 wire reset_button;
+wire serial_o;
 wire write_busy_o;
-wire read_ready_o;
-wire write_i;
-wire ack_i;
 
-Uart #(
+Loopback #(
   .CLOCK_DIVIDER_WIDTH(7)
 )
-uart (
+loopback (
   .reset_i(reset_i),
   .clock_i(clock_i),
-  .clock_divider_i(clock_divider_i),
-  .write_i(write_i),
-  .ack_i(ack_i),
-  .two_stop_bits_i(two_stop_bits_i),
-  .parity_bit_i(parity_bit_i),
-  .parity_even_i(parity_even_i),
-  .data_i(data),
-  .data_o(data),
   .serial_i(serial_i),
   .serial_o(serial_o),
   .write_busy_o(write_busy_o),
-  .read_ready_o(read_ready_o)
+  .clock_divider_i(7'd87),
+  .two_stop_bits_i(1'b0),
+  .parity_bit_i(1'b0),
+  .parity_even_i(1'b0)
 );
 
 assign clock_i = CLK_SE_AR;
-assign serial_i_external = AGPIO[2];
 assign serial_i = serial_i_buffer[1];
+assign serial_i_external = AGPIO[2];
 assign AGPIO[1] = serial_o;
+assign reset_i = reset_i_buffer[1];
+assign reset_button = ~USER_PB0;
 assign USER_LED0 = ~write_busy_o;
 assign USER_LED1 = 1'b1;
-assign reset_button = ~USER_PB0;
-assign reset_i = reset_i_buffer[1];
-
-assign write_i = read_ready_o & !write_busy_o;
-assign ack_i = write_busy_o;
 
 always @ (posedge clock_i) begin
   reset_i_buffer[0] <= reset_button;
