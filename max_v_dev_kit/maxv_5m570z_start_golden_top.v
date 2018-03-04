@@ -48,51 +48,40 @@ wire [7:0] data;
 wire serial_i;
 wire serial_o;
 wire reset_i;
-wire busy_o;
-wire ready_o;
+wire write_busy_o;
+wire read_ready_o;
 wire write_i;
 wire ack_i;
 
-UartTx #(
+Uart #(
   .CLOCK_DIVIDER_WIDTH(7)
 )
-uart_tx (
+uart (
   .reset_i(reset_i),
   .clock_i(clock_i),
+  .clock_divider_i(clock_divider_i),
   .write_i(write_i),
+  .ack_i(ack_i),
   .two_stop_bits_i(two_stop_bits_i),
   .parity_bit_i(parity_bit_i),
   .parity_even_i(parity_even_i),
-  .clock_divider_i(clock_divider_i),
   .data_i(data),
-  .serial_o(serial_o),
-  .busy_o(busy_o)
-);
-
-UartRx #(
-  .CLOCK_DIVIDER_WIDTH(7)
-)
-uart_rx (
-  .reset_i(reset_i),
-  .clock_i(clock_i),
-  .ack_i(ack_i),
-  .parity_bit_i(parity_bit_i),
-  .parity_even_i(parity_even_i),
-  .serial_i(serial_i_buffer_2),
-  .clock_divider_i(clock_divider_i),
   .data_o(data),
-  .ready_o(ready_o)
+  .serial_i(serial_i_buffer_2),
+  .serial_o(serial_o),
+  .write_busy_o(write_busy_o),
+  .read_ready_o(read_ready_o)
 );
 
 assign clock_i = CLK_SE_AR;
 assign serial_i = AGPIO[2];
 assign AGPIO[1] = serial_o;
-assign USER_LED0 = ~busy_o;
-assign USER_LED1 = ~ready_o;
+assign USER_LED0 = ~write_busy_o;
+assign USER_LED1 = 1'b1;
 assign reset_i = ~USER_PB0;
 
-assign write_i = ready_o & !busy_o;
-assign ack_i = busy_o;
+assign write_i = read_ready_o & !write_busy_o;
+assign ack_i = write_busy_o;
 
 always @ (posedge clock_i) begin
   serial_i_buffer_1 <= serial_i;
