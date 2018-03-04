@@ -42,12 +42,14 @@ reg parity_bit_i = 1'b0;
 reg parity_even_i = 1'b0;
 reg serial_i_buffer_1 = 1'b0;
 reg serial_i_buffer_2 = 1'b0;
+reg [1:0] reset_i_buffer = 2'b00;
 
 wire clock_i;
 wire [7:0] data;
 wire serial_i;
 wire serial_o;
 wire reset_i;
+wire reset_button;
 wire write_busy_o;
 wire read_ready_o;
 wire write_i;
@@ -78,12 +80,16 @@ assign serial_i = AGPIO[2];
 assign AGPIO[1] = serial_o;
 assign USER_LED0 = ~write_busy_o;
 assign USER_LED1 = 1'b1;
-assign reset_i = ~USER_PB0;
+assign reset_button = ~USER_PB0;
+assign reset_i = reset_i_buffer[1];
 
 assign write_i = read_ready_o & !write_busy_o;
 assign ack_i = write_busy_o;
 
 always @ (posedge clock_i) begin
+  reset_i_buffer[0] <= reset_button;
+  reset_i_buffer[1] <= reset_i_buffer[0];
+
   serial_i_buffer_1 <= serial_i;
   serial_i_buffer_2 <= serial_i_buffer_1;
 end
