@@ -40,13 +40,13 @@ reg [6:0] clock_divider_i = 7'd87;
 reg two_stop_bits_i = 1'b0;
 reg parity_bit_i = 1'b0;
 reg parity_even_i = 1'b0;
-reg serial_i_buffer_1 = 1'b0;
-reg serial_i_buffer_2 = 1'b0;
+reg [1:0] serial_i_buffer = 2'b00;
 reg [1:0] reset_i_buffer = 2'b00;
 
 wire clock_i;
 wire [7:0] data;
 wire serial_i;
+wire serial_i_external;
 wire serial_o;
 wire reset_i;
 wire reset_button;
@@ -69,14 +69,15 @@ uart (
   .parity_even_i(parity_even_i),
   .data_i(data),
   .data_o(data),
-  .serial_i(serial_i_buffer_2),
+  .serial_i(serial_i),
   .serial_o(serial_o),
   .write_busy_o(write_busy_o),
   .read_ready_o(read_ready_o)
 );
 
 assign clock_i = CLK_SE_AR;
-assign serial_i = AGPIO[2];
+assign serial_i_external = AGPIO[2];
+assign serial_i = serial_i_buffer[1];
 assign AGPIO[1] = serial_o;
 assign USER_LED0 = ~write_busy_o;
 assign USER_LED1 = 1'b1;
@@ -90,8 +91,8 @@ always @ (posedge clock_i) begin
   reset_i_buffer[0] <= reset_button;
   reset_i_buffer[1] <= reset_i_buffer[0];
 
-  serial_i_buffer_1 <= serial_i;
-  serial_i_buffer_2 <= serial_i_buffer_1;
+  serial_i_buffer[0] <= serial_i_external;
+  serial_i_buffer[1] <= serial_i_buffer[0];
 end
 
 endmodule
