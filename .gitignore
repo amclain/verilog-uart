@@ -1,1 +1,28 @@
+# Quartus
+.qsys_edit/
+db/
+incremental_db/
+output_files/
+simulation/
+verilog/greybox_tmp/
+work/
+transcript
+vsim.wlf
+*.bak
+*.cdf
+*.done
+*.jdi
 *.log
+*.mti
+*.pin
+*.pof
+*.qws
+*.rpt
+*.sld
+*.smsg
+*.summary
+
+# Dev kit
+max_v_dev_kit/.fr-Gt14Wf/
+max_v_dev_kit/.fr-nbewgW/
+max_v_dev_kit/greybox_tmp/
