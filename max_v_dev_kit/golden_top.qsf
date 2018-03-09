@@ -158,6 +158,7 @@ set_location_assignment PIN_M9 -to USER_PB0
 set_location_assignment PIN_R3 -to USER_PB1
 set_location_assignment PIN_C11 -to CAP_PB_1
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "NO HEAT SINK WITH STILL AIR"
+set_global_assignment -name SDC_FILE maxv_5m570z_start_golden_top.sdc
 set_global_assignment -name VERILOG_FILE verilog/loopback.v
 set_global_assignment -name VERILOG_FILE ../verilog/uart.v
 set_global_assignment -name VERILOG_FILE ../verilog/uart_rx.v
