@@ -164,4 +164,3 @@ set_global_assignment -name VERILOG_FILE ../verilog/uart.v
 set_global_assignment -name VERILOG_FILE ../verilog/uart_rx.v
 set_global_assignment -name VERILOG_FILE ../verilog/uart_tx.v
 set_global_assignment -name VERILOG_FILE maxv_5m570z_start_golden_top.v
-set_global_assignment -name SIGNALTAP_FILE signal_tap.stp
