@@ -1,15 +1,42 @@
+// A UART serial receiver.
+
 module UartRx #(
+  // Tune the clock divider bit width to your design to avoid wasting gates.
+  // 
+  // Example:
+  // Assuming a 10MHz clock and a desired baud rate of 115200, the divider
+  // value is 87. 87 fits into 7 bits, and therefore `CLOCK_DIVIDER_WIDTH`
+  // in this instance can be set to 7.
   parameter CLOCK_DIVIDER_WIDTH = 16
 ) (
+  // Module reset.
   input reset_i,
+
+  // Clock input.
   input clock_i,
-  input ack_i,
-  input parity_bit_i,
-  input parity_even_i,
-  input serial_i,
+
+  // Divides the `clock_i` signal to achieve the desired baud rate. This value
+  // must be a minimum of 2 for the receiver to operate.
   input [CLOCK_DIVIDER_WIDTH - 1:0] clock_divider_i,
+  
+  // UART serial input.
+  input serial_i,
+
+  // Data bus output.
   output reg [7:0] data_o = 8'h00,
-  output reg ready_o = 1'b0
+
+  // Receiver has received a packet and will not overwrite `data_o` until the
+  // data is acknowledged with `ack_i`.
+  output reg ready_o = 1'b0,
+
+  // Acknowledge byte received.
+  input ack_i,
+
+  // Use the parity bit if high, no parity if low.
+  input parity_bit_i,
+
+  // Use even parity if high, odd parity if low.
+  input parity_even_i
 );
 
 localparam STATE_IDLE = 0;

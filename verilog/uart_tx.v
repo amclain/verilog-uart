@@ -1,16 +1,39 @@
+// A UART serial transmitter.
+
 module UartTx #(
   parameter CLOCK_DIVIDER_WIDTH = 16
 ) (
+  // Module reset.
   input reset_i,
+
+  // Clock input.
   input clock_i,
-  input write_i,
-  input two_stop_bits_i,
-  input parity_bit_i,
-  input parity_even_i,
+
+  // Divides the `clock_i` signal to achieve the desired baud rate.
+  // The transmitter can operate with a divider value of 1. A value of 0
+  // implies 1.
   input [CLOCK_DIVIDER_WIDTH - 1:0] clock_divider_i,
-  input [7:0] data_i,
+
+  // UART serial output.
   output reg serial_o = 1'b1,
-  output busy_o
+
+  // Data bus input.
+  input [7:0] data_i,
+
+  // Write a byte to transmit. Must go low after each write.
+  input write_i,
+
+  // Transmitter is busy and will not accept another write.
+  output busy_o,
+  
+  // Transmit two stop bits if high, one stop bit if low.
+  input two_stop_bits_i,
+
+  // Use the parity bit if high, no parity if low.
+  input parity_bit_i,
+
+  // Use even parity if high, odd parity if low.
+  input parity_even_i
 );
 
 localparam STATE_POST_RESET = 0;
